@@ -591,51 +591,60 @@ async function readDrop() {
 async function checkDrop() {
   const code = document.getElementById('drop-check-input').value.trim();
   const errEl = document.getElementById('drop-check-error');
+
   errEl.classList.remove('show');
-  if (code.length !== 6) return;
+
+  if (code.length !== 6) {
+    errEl.textContent = 'Enter a valid 6-digit check code.';
+    errEl.classList.add('show');
+    return;
+  }
 
   const resultEl = document.getElementById('drop-check-result');
   const dotEl = document.getElementById('drop-check-dot');
   const textEl = document.getElementById('drop-check-text');
 
   try {
-    const snap = await db.ref('drops').orderByChild('checkCode').equalTo(code).once('value');
+    const snap = await db.ref('drops')
+      .orderByChild('checkCode')
+      .equalTo(code)
+      .once('value');
 
+    resultEl.style.display = 'block';
+
+    // If no drop exists with this check code,
+    // it was likely already read + destroyed
     if (!snap.exists()) {
-      resultEl.style.display = 'block';
       dotEl.className = 'dot ok';
       textEl.textContent = 'Message was read and destroyed.';
       return;
     }
 
     const data = Object.values(snap.val())[0];
-    resultEl.style.display = 'block';
 
+    // Expired
     if (Date.now() > data.expiresAt) {
       dotEl.className = 'dot bad';
       textEl.textContent = 'Drop expired and was auto-deleted.';
-    } else {
-      dotEl.className = 'dot waiting';
-      const exp = new Date(data.expiresAt);
-      textEl.textContent = `Not yet read. Auto-deletes ${exp.toLocaleDateString()} at ${exp.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}.`;
+      return;
     }
-  } catch(e) {
-    errEl.textContent = 'Error: ' + e.message;
-    errEl.classList.add('show');
-  }
-}
-  }
 
-  const data = Object.values(snap.val())[0];
-  resultEl.style.display = 'flex';
-
-  if (Date.now() > data.expiresAt) {
-    dotEl.className = 'dot bad';
-    textEl.textContent = 'Drop expired and was auto-deleted.';
-  } else {
+    // Still waiting
     dotEl.className = 'dot waiting';
+
     const exp = new Date(data.expiresAt);
-    textEl.textContent = `Not yet read. Auto-deletes ${exp.toLocaleDateString()} at ${exp.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}.`;
+
+    textEl.textContent =
+      `Not yet read. Auto-deletes ${exp.toLocaleDateString()} at ${exp.toLocaleTimeString([], {
+        hour: '2-digit',
+        minute: '2-digit'
+      })}.`;
+
+  } catch (e) {
+    console.error(e);
+
+    errEl.textContent = 'Error checking drop status.';
+    errEl.classList.add('show');
   }
 }
 
