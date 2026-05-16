@@ -594,18 +594,36 @@ async function checkDrop() {
   errEl.classList.remove('show');
   if (code.length !== 6) return;
 
-  // Search for a drop with this check code
-  const snap = await db.ref('drops').orderByChild('checkCode').equalTo(code).once('value');
   const resultEl = document.getElementById('drop-check-result');
   const dotEl = document.getElementById('drop-check-dot');
   const textEl = document.getElementById('drop-check-text');
 
-  if (!snap.exists()) {
-    // Either read already or code wrong — we intentionally give same message for privacy
-    resultEl.style.display = 'flex';
-    dotEl.className = 'dot ok';
-    textEl.textContent = 'Message was read and destroyed.';
-    return;
+  try {
+    const snap = await db.ref('drops').orderByChild('checkCode').equalTo(code).once('value');
+
+    if (!snap.exists()) {
+      resultEl.style.display = 'block';
+      dotEl.className = 'dot ok';
+      textEl.textContent = 'Message was read and destroyed.';
+      return;
+    }
+
+    const data = Object.values(snap.val())[0];
+    resultEl.style.display = 'block';
+
+    if (Date.now() > data.expiresAt) {
+      dotEl.className = 'dot bad';
+      textEl.textContent = 'Drop expired and was auto-deleted.';
+    } else {
+      dotEl.className = 'dot waiting';
+      const exp = new Date(data.expiresAt);
+      textEl.textContent = `Not yet read. Auto-deletes ${exp.toLocaleDateString()} at ${exp.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}.`;
+    }
+  } catch(e) {
+    errEl.textContent = 'Error: ' + e.message;
+    errEl.classList.add('show');
+  }
+}
   }
 
   const data = Object.values(snap.val())[0];
