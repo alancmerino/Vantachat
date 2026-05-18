@@ -3,558 +3,439 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="VantaChat — Private conversations that disappear. No accounts, no logs, no trace.">
-<title>VantaChat — Private by design</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<title>VantaChat</title>
 <style>
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #ffffff; --bg2: #f7f7f5; --bg3: #efefed;
+    --text: #111111; --text2: #6b6b6b; --text3: #9b9b9b;
+    --border: rgba(0,0,0,0.1); --border2: rgba(0,0,0,0.18);
+    --accent: #0f7cf5; --accent-bg: #e8f1fd;
+    --bubble-out: #0f7cf5; --bubble-in: #f0f0ee;
+    --danger: #d93025; --success: #1e8e3e;
+    --radius: 12px; --radius-sm: 8px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1a1a1a; --bg2: #222222; --bg3: #2c2c2c;
+      --text: #f0f0ee; --text2: #a0a09e; --text3: #6b6b69;
+      --border: rgba(255,255,255,0.08); --border2: rgba(255,255,255,0.15);
+      --accent: #4a9ff5; --accent-bg: #1a2d45;
+      --bubble-out: #1a6bc7; --bubble-in: #2c2c2c;
+    }
+  }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg); color: var(--text);
+    height: 100dvh; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; font-size: 15px;
+  }
+  .screen { display: none; width: 100%; max-width: 420px; padding: 0 20px; flex-direction: column; }
+  .screen.active { display: flex; }
+  #screen-home { align-items: center; text-align: center; }
+  #screen-chat { height: 100dvh; max-width: 100%; padding: 0; }
 
-:root {
-  --black: #0e1a14;
-  --white: #f2f5f0;
-  --grey: #7a9186;
-  --grey-light: #d4ddd8;
-  --accent: #3d9e6b;
-  --serif: 'DM Serif Display', Georgia, serif;
-  --sans: 'DM Sans', system-ui, sans-serif;
-}
+  .logo { width: 48px; height: 48px; background: var(--text); border-radius: 14px;
+    display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; }
+  .logo svg { width: 24px; height: 24px; }
+  .home-title { font-size: 22px; font-weight: 600; letter-spacing: -0.4px; margin-bottom: 6px; }
+  .home-sub { font-size: 14px; color: var(--text2); margin-bottom: 36px; max-width: 280px; }
+  .btn-group { display: flex; flex-direction: column; gap: 10px; width: 100%; }
 
-html { scroll-behavior: smooth; }
+  .btn {
+    width: 100%; padding: 13px 20px; border-radius: var(--radius-sm);
+    border: 1px solid var(--border2); font-size: 15px; font-weight: 500;
+    cursor: pointer; background: transparent; color: var(--text);
+    transition: background 0.15s; font-family: inherit;
+  }
+  .btn:hover { background: var(--bg2); }
+  .btn.primary { background: var(--text); color: var(--bg); border-color: var(--text); }
+  .btn.primary:hover { opacity: 0.88; }
+  .btn.danger { border-color: var(--danger); color: var(--danger); }
+  .btn.danger:hover { background: rgba(217,48,37,0.07); }
+  .btn.ok { background: var(--success); color: #fff; border-color: var(--success); }
+  .btn.ok:hover { opacity: 0.88; }
 
-body {
-  font-family: var(--sans );
-  background: var(--white);
-  color: var(--black);
-  overflow-x: hidden;
-  font-weight: 300;
-}
+  .card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; width: 100%; }
+  .card-title { font-size: 17px; font-weight: 600; margin-bottom: 4px; }
+  .card-sub { font-size: 13px; color: var(--text2); margin-bottom: 20px; line-height: 1.5; }
 
-/* ── NAV ── */
-nav {
-  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-  padding: 20px 40px;
-  display: flex; align-items: center; justify-content: space-between;
-  background: rgba(242,245,240,0.88);
-  backdrop-filter: blur(12px);
-  border-bottom: 1px solid transparent;
-  transition: border-color 0.3s;
-}
-nav.scrolled { border-bottom-color: var(--grey-light); }
+  .back-btn { background: none; border: none; cursor: pointer; color: var(--text2);
+    font-size: 13px; font-family: inherit; padding: 0; margin-bottom: 12px; align-self: flex-start; }
+  .back-btn:hover { color: var(--text); }
 
-.nav-logo {
-  display: flex; align-items: center; gap: 10px;
-  font-family: var(--serif); font-size: 20px; color: var(--black);
-  text-decoration: none;
-}
-.nav-logo-icon {
-  width: 32px; height: 32px; background: var(--black); border-radius: 8px;
-  display: flex; align-items: center; justify-content: center;
-}
-.nav-logo-icon svg { width: 16px; height: 16px; }
+  .code-label { font-size: 12px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text3); margin-bottom: 6px; font-weight: 500; }
+  .code-display { background: var(--bg3); border-radius: var(--radius-sm); padding: 20px;
+    text-align: center; letter-spacing: 6px; font-size: 32px; font-weight: 600;
+    border: 1px solid var(--border); margin: 4px 0 12px; color: var(--text); }
 
-.nav-cta {
-  background: var(--black); color: var(--white);
-  padding: 9px 20px; border-radius: 6px;
-  font-family: var(--sans); font-size: 14px; font-weight: 500;
-  text-decoration: none; transition: opacity 0.15s;
-}
-.nav-cta:hover { opacity: 0.8; }
+  .status-row { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text2); padding: 10px 0; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text3); flex-shrink: 0; }
+  .dot.waiting { background: #f5a623; animation: pulse 1.4s infinite; }
+  .dot.ok { background: var(--success); }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.35} }
 
-/* ── HERO ── */
-.hero {
-  min-height: 100vh;
-  display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
-  text-align: center;
-  padding: 120px 24px 80px;
-  position: relative;
-}
+  .challenge-box { background: var(--accent-bg); border: 1px solid rgba(15,124,245,0.2);
+    border-radius: var(--radius-sm); padding: 16px; margin-top: 8px; }
+  .clabel { font-size: 12px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.8px; color: var(--accent); margin-bottom: 6px; }
+  .challenge-code { font-size: 28px; font-weight: 600; letter-spacing: 4px; color: var(--text); margin-bottom: 10px; }
+  .challenge-desc { font-size: 13px; color: var(--text2); margin-bottom: 14px; line-height: 1.5; }
+  .verify-row { display: flex; gap: 8px; }
 
-.hero-eyebrow {
-  display: inline-flex; align-items: center; gap: 8px;
-  font-size: 12px; font-weight: 500; letter-spacing: 1.5px;
-  text-transform: uppercase; color: var(--grey);
-  margin-bottom: 28px;
-  opacity: 0; animation: fadeUp 0.8s ease 0.1s forwards;
-}
-.hero-eyebrow::before, .hero-eyebrow::after {
-  content: ''; display: block; width: 24px; height: 1px; background: var(--grey);
-}
+  #screen-create { gap: 16px; }
+  #screen-join { gap: 16px; }
 
-.hero-title {
-  font-family: var(--serif);
-  font-size: clamp(40px, 7vw, 88px);
-  line-height: 1.05;
-  letter-spacing: -1px;
-  max-width: 100%;
-  margin-bottom: 24px;
-  opacity: 0; animation: fadeUp 0.8s ease 0.25s forwards;
-}
-.hero-title em {
-  font-style: italic; color: var(--grey);
-}
+  input[type="text"] {
+    width: 100%; padding: 12px 14px; border: 1px solid var(--border2);
+    border-radius: var(--radius-sm); font-size: 15px; background: var(--bg);
+    color: var(--text); font-family: inherit; outline: none; transition: border-color 0.15s;
+  }
+  input[type="text"]:focus { border-color: var(--accent); }
+  input[type="text"]::placeholder { color: var(--text3); }
+  .input-label { font-size: 13px; font-weight: 500; color: var(--text2); margin-bottom: 6px; }
+  .error-msg { font-size: 13px; color: var(--danger); margin-top: 6px; display: none; }
+  .error-msg.show { display: block; }
 
-/* Fade in/out on "leaving a trace" */
-.fade-phrase-wrap {
-  display: inline-block;
-  font-style: italic;
-  color: var(--grey);
-  animation: phraseReveal 5s ease-in-out infinite;
-}
+  .resp-box { background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 16px; text-align: center; }
+  .resp-label { font-size: 12px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text3); margin-bottom: 6px; }
+  .resp-code { font-size: 30px; font-weight: 600; letter-spacing: 5px; color: var(--text); margin-bottom: 8px; }
+  .resp-desc { font-size: 13px; color: var(--text2); line-height: 1.5; }
+  .wait-row { display: flex; align-items: center; gap: 10px; margin-top: 14px; font-size: 13px; color: var(--text2); }
+  .spinner { width: 16px; height: 16px; border: 2px solid var(--border2); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; flex-shrink: 0; }
+  @keyframes spin { to { transform: rotate(360deg); } }
 
-@keyframes phraseReveal {
-  0%   { opacity: 0; }
-  20%  { opacity: 1; }
-  75%  { opacity: 1; }
-  100% { opacity: 0; }
-}
+  /* Chat */
+  .chat-header { padding: 14px 16px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 10px; background: var(--bg); flex-shrink: 0; }
+  .chat-avatar { width: 34px; height: 34px; border-radius: 50%; background: var(--bg3);
+    display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; color: var(--text2); flex-shrink: 0; }
+  .chat-info { flex: 1; }
+  .chat-name { font-weight: 600; font-size: 15px; }
+  .chat-status { font-size: 12px; color: var(--success); }
+  .chat-messages { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 4px; }
+  .msg-wrapper { display: flex; flex-direction: column; max-width: 78%; gap: 2px; }
+  .msg-wrapper.out { align-self: flex-end; align-items: flex-end; }
+  .msg-wrapper.in { align-self: flex-start; align-items: flex-start; }
+  .bubble { padding: 9px 13px; border-radius: 18px; font-size: 15px; line-height: 1.45; word-break: break-word; }
+  .msg-wrapper.out .bubble { background: var(--bubble-out); color: #fff; border-bottom-right-radius: 5px; }
+  .msg-wrapper.in .bubble { background: var(--bubble-in); color: var(--text); border-bottom-left-radius: 5px; }
+  .msg-time { font-size: 11px; color: var(--text3); padding: 0 4px; }
+  .system-msg { align-self: center; font-size: 12px; color: var(--text3); background: var(--bg2);
+    border: 1px solid var(--border); border-radius: 20px; padding: 4px 12px; margin: 6px 0; }
+  .chat-input-bar { padding: 10px 12px; border-top: 1px solid var(--border);
+    display: flex; gap: 8px; align-items: flex-end; background: var(--bg); flex-shrink: 0; }
+  .chat-input-bar textarea { flex: 1; border: 1px solid var(--border2); border-radius: 20px;
+    padding: 9px 14px; font-size: 15px; font-family: inherit; background: var(--bg2);
+    color: var(--text); resize: none; outline: none; max-height: 120px; line-height: 1.4; transition: border-color 0.15s; }
+  .chat-input-bar textarea:focus { border-color: var(--accent); }
+  .chat-input-bar textarea::placeholder { color: var(--text3); }
+  .send-btn { width: 36px; height: 36px; border-radius: 50%; background: var(--accent);
+    border: none; cursor: pointer; display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; transition: opacity 0.15s, transform 0.1s; align-self: flex-end; }
+  .send-btn:hover { opacity: 0.85; }
+  .send-btn:active { transform: scale(0.93); }
+  .send-btn svg { width: 16px; height: 16px; fill: white; }
 
 
-.hero-sub {
-  font-size: clamp(16px, 2vw, 20px);
-  color: var(--grey);
-  max-width: 480px;
-  line-height: 1.65;
-  margin-bottom: 44px;
-  font-weight: 300;
-  opacity: 0; animation: fadeUp 0.8s ease 0.4s forwards;
-}
-
-.hero-actions {
-  display: flex; gap: 12px; flex-wrap: wrap; justify-content: center;
-  opacity: 0; animation: fadeUp 0.8s ease 0.55s forwards;
-}
-
-.btn-primary {
-  background: var(--black); color: var(--white);
-  padding: 14px 28px; border-radius: 8px;
-  font-family: var(--sans); font-size: 15px; font-weight: 500;
-  text-decoration: none; transition: opacity 0.15s, transform 0.15s;
-  display: inline-flex; align-items: center; gap: 8px;
-}
-.btn-primary:hover { opacity: 0.85; transform: translateY(-1px); }
-
-.btn-secondary {
-  background: transparent; color: var(--black);
-  padding: 14px 28px; border-radius: 8px;
-  border: 1px solid var(--grey-light);
-  font-family: var(--sans); font-size: 15px; font-weight: 400;
-  text-decoration: none; transition: background 0.15s, transform 0.15s;
-}
-.btn-secondary:hover { background: var(--grey-light); transform: translateY(-1px); }
-
-/* Hero graphic */
-.hero-graphic {
-  margin-top: 72px; width: 100%; max-width: 560px;
-  opacity: 0; animation: fadeUp 0.8s ease 0.7s forwards;
-  position: relative;
-}
-.chat-mockup {
-  background: var(--white);
-  border: 1px solid var(--grey-light);
-  border-radius: 16px;
-  overflow: hidden;
-  box-shadow: 0 24px 80px rgba(0,0,0,0.1), 0 4px 16px rgba(0,0,0,0.06);
-}
-.mockup-header {
-  padding: 14px 16px;
-  border-bottom: 1px solid var(--grey-light);
-  display: flex; align-items: center; gap: 10px;
-  background: var(--white);
-}
-.mockup-avatar {
-  width: 32px; height: 32px; border-radius: 50%;
-  background: #d4ead9; display: flex; align-items: center; justify-content: center;
-  font-size: 12px; font-weight: 600; color: #2d7a52;
-}
-.mockup-name { font-size: 14px; font-weight: 500; }
-.mockup-status { font-size: 11px; color: #2d7a52; }
-.mockup-messages { padding: 20px 16px; display: flex; flex-direction: column; gap: 10px; background: var(--white); }
-
-.mockup-msg { display: flex; flex-direction: column; max-width: 72%; }
-.mockup-msg.out { align-self: flex-end; align-items: flex-end; }
-.mockup-msg.in { align-self: flex-start; }
-.mockup-bubble {
-  padding: 9px 14px; border-radius: 18px; font-size: 14px; line-height: 1.45;
-  opacity: 0;
-}
-.mockup-msg.out .mockup-bubble { background: var(--accent); color: #fff; border-bottom-right-radius: 4px; animation: bubbleIn 0.4s ease forwards; }
-.mockup-msg.in .mockup-bubble { background: #e4ebe4; color: var(--black); border-bottom-left-radius: 4px; animation: bubbleIn 0.4s ease forwards; }
-.mockup-time { font-size: 11px; color: var(--grey); margin-top: 3px; padding: 0 4px; }
-.mockup-system {
-  align-self: center; font-size: 11px; color: var(--grey);
-  background: #edf2ed; border: 1px solid var(--grey-light);
-  border-radius: 20px; padding: 3px 10px;
-  opacity: 0; animation: bubbleIn 0.4s ease 0.2s forwards;
-}
-
-.mockup-msg:nth-child(2) .mockup-bubble { animation-delay: 0.9s; }
-.mockup-msg:nth-child(3) .mockup-bubble { animation-delay: 1.4s; }
-.mockup-msg:nth-child(4) .mockup-bubble { animation-delay: 1.9s; }
-.mockup-msg:nth-child(5) .mockup-bubble { animation-delay: 2.4s; }
-
-@keyframes bubbleIn {
-  from { opacity: 0; transform: translateY(6px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-/* ── STRIP ── */
-.strip {
-  border-top: 1px solid var(--grey-light);
-  border-bottom: 1px solid var(--grey-light);
-  padding: 16px 0;
-  overflow: hidden;
-  background: var(--white);
-}
-.strip-inner {
-  display: flex; gap: 48px; white-space: nowrap;
-  animation: marquee 20s linear infinite;
-  width: max-content;
-}
-.strip-item {
-  font-size: 13px; font-weight: 400; color: var(--grey);
-  letter-spacing: 0.5px; display: flex; align-items: center; gap: 10px;
-}
-.strip-item::before { content: '·'; }
-@keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
-
-/* ── HOW IT WORKS ── */
-.section { padding: 100px 24px; max-width: 1000px; margin: 0 auto; }
-
-.section-label {
-  font-size: 12px; font-weight: 500; letter-spacing: 1.5px;
-  text-transform: uppercase; color: var(--grey); margin-bottom: 16px;
-}
-.section-title {
-  font-family: var(--serif);
-  font-size: clamp(36px, 5vw, 56px);
-  line-height: 1.1; letter-spacing: -0.5px;
-  margin-bottom: 60px; max-width: 560px;
-}
-
-.steps {
-  display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 1px; background: var(--grey-light);
-  border: 1px solid var(--grey-light); border-radius: 12px; overflow: hidden;
-}
-.step {
-  background: var(--white); padding: 36px 32px;
-  transition: background 0.2s;
-}
-.step:hover { background: #fafaf8; }
-.step-num {
-  font-family: var(--serif); font-size: 48px; color: var(--grey-light);
-  line-height: 1; margin-bottom: 20px; font-style: italic;
-}
-.step-title { font-size: 17px; font-weight: 500; margin-bottom: 10px; }
-.step-desc { font-size: 14px; color: var(--grey); line-height: 1.65; }
-
-/* ── FEATURES ── */
-.features-section { padding: 100px 24px; background: #0e1a14; }
-.features-inner { max-width: 1000px; margin: 0 auto; }
-.features-section .section-label { color: #666; }
-.features-section .section-title { color: var(--white); }
-
-.features-grid {
-  display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 24px;
-}
-.feature-card {
-  padding: 32px;
-  border: 1px solid #1e3028;
-  border-radius: 12px;
-  transition: border-color 0.2s, background 0.2s;
-}
-.feature-card:hover { border-color: #2d4a3a; background: #111f18; }
-.feature-icon {
-  width: 40px; height: 40px; border-radius: 10px;
-  background: #162218; border: 1px solid #243d2e;
-  display: flex; align-items: center; justify-content: center;
-  margin-bottom: 20px;
-}
-.feature-icon svg { width: 18px; height: 18px; stroke: #5a9e7a; }
-.feature-title { font-size: 16px; font-weight: 500; color: #e8f0ea; margin-bottom: 8px; }
-.feature-desc { font-size: 14px; color: #5a7a66; line-height: 1.65; }
-
-/* ── CTA SECTION ── */
-.cta-section {
-  padding: 120px 24px; text-align: center;
-  background: var(--white);
-}
-.cta-title {
-  font-family: var(--serif);
-  font-size: clamp(40px, 6vw, 72px);
-  line-height: 1.05; letter-spacing: -0.5px;
-  margin-bottom: 20px; max-width: 640px; margin-left: auto; margin-right: auto;
-}
-.cta-title em { font-style: italic; color: var(--grey); }
-.cta-sub {
-  font-size: 16px; color: var(--grey); margin-bottom: 40px;
-  max-width: 400px; margin-left: auto; margin-right: auto; line-height: 1.65;
-}
-
-/* ── FOOTER ── */
-footer {
-  border-top: 1px solid var(--grey-light);
-  padding: 28px 40px;
-  display: flex; align-items: center; justify-content: space-between;
-  flex-wrap: wrap; gap: 12px;
-}
-.footer-logo { font-family: var(--serif); font-size: 16px; color: var(--black); }
-.footer-note { font-size: 13px; color: var(--grey); }
-
-/* ── ANIMATIONS ── */
-@keyframes fadeUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.reveal {
-  opacity: 0; transform: translateY(24px);
-  transition: opacity 0.7s ease, transform 0.7s ease;
-}
-.reveal.visible { opacity: 1; transform: translateY(0); }
-
-/* ── RESPONSIVE ── */
-@media (max-width: 640px) {
-  nav { padding: 16px 20px; }
-  .hero { padding: 100px 20px 60px; }
-  .section { padding: 70px 20px; }
-  footer { padding: 24px 20px; }
-  .steps { grid-template-columns: 1fr; }
-}
 </style>
 </head>
 <body>
 
-<nav id="nav">
-  <a href="#" class="nav-logo">
-    <div class="nav-logo-icon">
-      <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-      </svg>
-    </div>
-    VantaChat
-  </a>
-  <a href="./app" class="nav-cta">Open app →</a>
-</nav>
-
-<!-- HERO -->
-<section class="hero">
-  <div class="hero-eyebrow">Private by design</div>
-  <h1 class="hero-title">Chat without  
-
-    <span class="fade-phrase-wrap">leaving a trace</span>
-  </h1>
-  <p class="hero-sub">No accounts. No phone numbers. No message history. Just a code, a handshake, and a conversation that disappears when you're done.</p>
-  <div class="hero-actions">
-    <a href="./app" class="btn-primary">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-      Start a private chat
-    </a>
-    <a href="#how" class="btn-secondary">How it works</a>
+<!-- HOME -->
+<div class="screen active" id="screen-home">
+  <div class="logo">
+    <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+    </svg>
   </div>
-
-  <div class="hero-graphic">
-    <div class="chat-mockup">
-      <div class="mockup-header">
-        <div class="mockup-avatar">JD</div>
-        <div>
-          <div class="mockup-name">Jamie</div>
-          <div class="mockup-status">Connected</div>
-        </div>
-      </div>
-      <div class="mockup-messages">
-        <div class="mockup-system">Connected with Jamie. Messages disappear when you leave.</div>
-        <div class="mockup-msg in">
-          <div class="mockup-bubble">Need to tell you something — not on WhatsApp</div>
-          <div class="mockup-time">14:02</div>
-        </div>
-        <div class="mockup-msg out">
-          <div class="mockup-bubble">Sending you a VantaChat code now. No logs.</div>
-          <div class="mockup-time">14:02</div>
-        </div>
-        <div class="mockup-msg in">
-          <div class="mockup-bubble">Perfect. Joining now 🔒</div>
-          <div class="mockup-time">14:03</div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- STRIP -->
-<div class="strip">
-  <div class="strip-inner">
-    <span class="strip-item">No accounts required</span>
-    <span class="strip-item">No message history</span>
-    <span class="strip-item">No phone number</span>
-    <span class="strip-item">Verified handshake</span>
-    <span class="strip-item">Ephemeral by design</span>
-    <span class="strip-item">No data stored</span>
-    <span class="strip-item">Works on any device</span>
-    <span class="strip-item">No app download needed</span>
-    <!-- duplicate for seamless loop -->
-    <span class="strip-item">No accounts required</span>
-    <span class="strip-item">No message history</span>
-    <span class="strip-item">No phone number</span>
-    <span class="strip-item">Verified handshake</span>
-    <span class="strip-item">Ephemeral by design</span>
-    <span class="strip-item">No data stored</span>
-    <span class="strip-item">Works on any device</span>
-    <span class="strip-item">No app download needed</span>
+  <div class="home-title">VantaChat</div>
+  <div class="home-sub">Private, ephemeral conversations. No accounts, no logs.</div>
+  <div class="btn-group">
+    <button class="btn primary" onclick="startCreate()">Create a chat</button>
+    <button class="btn" onclick="showScreen('join')">Join a chat</button>
   </div>
 </div>
 
-<!-- HOW IT WORKS: CHAT -->
-<section class="section" id="how">
-  <div class="section-label reveal">How it works</div>
-  <h2 class="section-title reveal">Three steps to a completely private conversation</h2>
-  <div class="steps reveal">
-    <div class="step">
-      <div class="step-num">01</div>
-      <div class="step-title">Create a room</div>
-      <div class="step-desc">One tap generates a unique 6-digit code. No sign up, no email, no password. Just a code.</div>
+<!-- CREATE -->
+<div class="screen" id="screen-create">
+  <button class="back-btn" onclick="goHome()">← Back</button>
+  <div class="card">
+    <div class="card-title">Your room code</div>
+    <div class="card-sub">Share this with the person you want to chat with.</div>
+    <div class="code-label">Room code</div>
+    <div class="code-display" id="room-code-display">——</div>
+    <div class="status-row">
+      <div class="dot waiting" id="status-dot"></div>
+      <span id="status-text">Waiting for someone to join…</span>
     </div>
-    <div class="step">
-      <div class="step-num">02</div>
-      <div class="step-title">Verify the handshake</div>
-      <div class="step-desc">The joiner receives a verification code to read back to you. You confirm it matches before anyone enters. No uninvited guests.</div>
-    </div>
-    <div class="step">
-      <div class="step-num">03</div>
-      <div class="step-title">Chat and disappear</div>
-      <div class="step-desc">Your conversation exists only while you're both present. When either person leaves, it's gone — from the app and from our servers.</div>
-    </div>
-  </div>
-</section>
-
-<!-- HOW IT WORKS: DEAD DROP -->
-<section class="section" id="dead-drop">
-  <div class="section-label reveal">Dead Drop</div>
-  <h2 class="section-title reveal">Send a message that destroys itself</h2>
-  <div class="steps reveal">
-    <div class="step">
-      <div class="step-num">01</div>
-      <div class="step-title">Write & generate</div>
-      <div class="step-desc">Write your message and tap send. You get a drop code to share and a check code to verify it was read.</div>
-    </div>
-    <div class="step">
-      <div class="step-num">02</div>
-      <div class="step-title">Share the drop code</div>
-      <div class="step-desc">Send the drop code to your recipient through any channel. They paste it in, read the message, and it's instantly deleted from our servers.</div>
-    </div>
-    <div class="step">
-      <div class="step-num">03</div>
-      <div class="step-title">Check with your code</div>
-      <div class="step-desc">Use your check code anytime to verify the message was read and destroyed. No way to know if someone tried and failed.</div>
-    </div>
-  </div>
-</section>
-
-<!-- FEATURES -->
-<section class="features-section">
-  <div class="features-inner">
-    <div class="section-label reveal">Why VantaChat</div>
-    <h2 class="section-title reveal">Built around privacy,  
-not around your data</h2>
-    <div class="features-grid">
-      <div class="feature-card reveal">
-        <div class="feature-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-          </svg>
-        </div>
-        <div class="feature-title">Zero accounts</div>
-        <div class="feature-desc">No sign up, no email, no phone number. Nothing that identifies you before, during, or after a chat.</div>
-      </div>
-      <div class="feature-card reveal">
-        <div class="feature-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/>
-          </svg>
-        </div>
-        <div class="feature-title">No message logs</div>
-        <div class="feature-desc">Messages aren't stored anywhere permanently. The moment you leave, the conversation is deleted from our database.</div>
-      </div>
-      <div class="feature-card reveal">
-        <div class="feature-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-          </svg>
-        </div>
-        <div class="feature-title">Verified entry</div>
-        <div class="feature-desc">The challenge-response handshake means only the person you give the code to can join. No link forwarding, no gate crashing.</div>
-      </div>
-      <div class="feature-card reveal">
-        <div class="feature-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-          </svg>
-        </div>
-        <div class="feature-title">Ephemeral by design</div>
-        <div class="feature-desc">Conversations exist only in the moment. There's no history to screenshot, subpoena, or leak later.</div>
-      </div>
-      <div class="feature-card reveal">
-        <div class="feature-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12" y2="18"/>
-          </svg>
-        </div>
-        <div class="feature-title">Works on any device</div>
-        <div class="feature-desc">No app download required. Open a browser, go to the link, start chatting. Works on phone, tablet, or desktop.</div>
-      </div>
-      <div class="feature-card reveal">
-        <div class="feature-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
-            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-          </svg>
-        </div>
-        <div class="feature-title">Just two people</div>
-        <div class="feature-desc">One creator. One joiner. A private channel between exactly two people — nobody else can listen in.</div>
+    <div class="challenge-box" id="challenge-box" style="display:none;">
+      <div class="clabel">Verify this code</div>
+      <div class="challenge-code" id="challenge-incoming">——</div>
+      <div class="challenge-desc">Ask the joiner to read you their verification code. If it matches above, approve.</div>
+      <div class="verify-row">
+        <button class="btn ok" style="flex:1" onclick="approveJoin()">Approve</button>
+        <button class="btn danger" style="flex:1" onclick="rejectJoin()">Reject</button>
       </div>
     </div>
   </div>
-</section>
+</div>
 
-<!-- CTA -->
-<section class="cta-section">
-  <h2 class="cta-title reveal">Some conversations  
-should stay <em>between you</em></h2>
-  <p class="cta-sub reveal">No setup. No account. Ready in seconds.</p>
-  <div class="reveal">
-    <a href="./app" class="btn-primary" style="font-size:16px;padding:16px 36px;">
-      Start a private chat →
-    </a>
+<!-- JOIN -->
+<div class="screen" id="screen-join">
+  <button class="back-btn" onclick="goHome()">← Back</button>
+  <div class="card" id="join-step-1">
+    <div class="card-title">Join a chat</div>
+    <div class="card-sub">Enter the 6-digit code from the chat creator.</div>
+    <div class="input-label">Room code</div>
+    <input type="text" id="join-code-input" maxlength="6" placeholder="000000"
+      style="letter-spacing:4px;font-size:22px;font-weight:600;text-align:center;margin-bottom:6px;"
+      oninput="this.value=this.value.replace(/\D/g,'')">
+    <div class="error-msg" id="join-error">Room not found or already taken.</div>
+    <button class="btn primary" style="margin-top:14px;" onclick="joinRoom()">Continue</button>
   </div>
-</section>
+  <div class="card" id="join-step-2" style="display:none;">
+    <div class="card-title">Share your verification code</div>
+    <div class="card-sub">Read this code to the creator. They must approve it to let you in.</div>
+    <div class="resp-box">
+      <div class="resp-label">Your verification code</div>
+      <div class="resp-code" id="my-challenge-code">——</div>
+    </div>
+    <div class="wait-row">
+      <div class="spinner"></div>
+      <span id="join-wait-msg">Waiting for approval…</span>
+    </div>
+  </div>
+</div>
 
-<!-- FOOTER -->
-<footer>
-  <div class="footer-logo">VantaChat</div>
-  <div class="footer-note">No accounts. No logs. No trace.</div>
-</footer>
+<!-- CHAT -->
+<div class="screen" id="screen-chat">
+  <div class="chat-header">
+    <div class="chat-avatar" id="chat-avatar">?</div>
+    <div class="chat-info">
+      <div class="chat-name" id="chat-peer-name">Chat</div>
+      <div class="chat-status">Connected</div>
+    </div>
+    <button class="btn danger" style="width:auto;padding:7px 14px;font-size:13px;" onclick="leaveChat()">Leave</button>
+  </div>
+  <div class="chat-messages" id="chat-messages"></div>
+  <div class="chat-input-bar">
+    <textarea id="msg-input" rows="1" placeholder="Message…" onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+    <button class="send-btn" onclick="sendMessage()">
+      <svg viewBox="0 0 24 24"><path d="M2 21l21-9L2 3v7l15 2-15 2v7z"/></svg>
+    </button>
+  </div>
+</div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.7.1/firebase-app-compat.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.7.1/firebase-database-compat.min.js"></script>
 <script>
-// Nav scroll effect
-const nav = document.getElementById('nav');
-window.addEventListener('scroll', () => {
-  nav.classList.toggle('scrolled', window.scrollY > 20);
-});
+// ── STATE ──────────────────────────────────────
+let db = null;
+let myRole = null;
+let roomCode = null;
+let myUserId = null;
+let roomRef = null;
 
-// Reveal on scroll
-const reveals = document.querySelectorAll('.reveal');
-const observer = new IntersectionObserver(entries => {
-  entries.forEach((e, i) => {
-    if (e.isIntersecting) {
-      setTimeout(() => e.target.classList.add('visible'), i * 80);
-      observer.unobserve(e.target);
+// We store the actual callback functions so we can call .off(event, fn) properly
+let handshakeFn = null;
+let msgFn = null;
+let roomWatchFn = null;
+
+// ── FIREBASE ────────────────────────────────────
+function initFirebase(url) {
+  try {
+    firebase.initializeApp({ databaseURL: url, apiKey: 'x', projectId: 'x' });
+    db = firebase.database();
+  } catch(e) { alert('Firebase error: ' + e.message); }
+}
+
+// ── UTILS ───────────────────────────────────────
+function genCode(n) { return Array.from({length:n}, ()=>Math.floor(Math.random()*10)).join(''); }
+function genId() { return Math.random().toString(36).slice(2,10); }
+function challengeFor(rc, uid) {
+  let h = 0;
+  for (let c of rc+uid) h = (h*31 + c.charCodeAt(0)) & 0xffffff;
+  return String(Math.abs(h)).padStart(8,'0').slice(0,6);
+}
+function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>'); }
+function fmt(ts) { return new Date(ts).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}); }
+
+// ── NAV ─────────────────────────────────────────
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-'+name).classList.add('active');
+}
+
+function goHome() {
+  teardown();
+  // reset join UI
+  document.getElementById('join-step-1').style.display = 'block';
+  document.getElementById('join-step-2').style.display = 'none';
+  document.getElementById('join-code-input').value = '';
+  document.getElementById('join-error').classList.remove('show');
+  document.getElementById('join-wait-msg').textContent = 'Waiting for approval…';
+  // reset create UI
+  document.getElementById('challenge-box').style.display = 'none';
+  document.getElementById('status-dot').className = 'dot waiting';
+  document.getElementById('status-text').textContent = 'Waiting for someone to join…';
+  showScreen('home');
+}
+
+function teardown() {
+  // Remove all listeners
+  if (roomRef && handshakeFn) { roomRef.off('value', handshakeFn); handshakeFn = null; }
+  if (roomRef && roomWatchFn) { roomRef.off('value', roomWatchFn); roomWatchFn = null; }
+  if (roomRef && msgFn) { roomRef.child('messages').off('child_added', msgFn); msgFn = null; }
+  // Delete room if creator
+  if (roomRef && myRole === 'creator') roomRef.remove().catch(()=>{});
+  roomRef = null; myRole = null; roomCode = null; myUserId = null;
+}
+
+// ── CREATE ──────────────────────────────────────
+async function startCreate() {
+  if (!db) { alert('Firebase not connected yet.'); return; }
+  myRole = 'creator';
+  myUserId = genId();
+  roomCode = genCode(6);
+  roomRef = db.ref('rooms/' + roomCode);
+
+  await roomRef.set({ status: 'waiting', creatorId: myUserId, createdAt: Date.now() });
+
+  document.getElementById('room-code-display').textContent = roomCode;
+  showScreen('create');
+
+  // Listen for room changes
+  handshakeFn = roomRef.on('value', snap => {
+    const d = snap.val();
+    if (!d) return;
+    console.log('[creator] status:', d.status);
+
+    if (d.status === 'challenge_pending' && d.joinerId) {
+      const code = challengeFor(roomCode, d.joinerId);
+      document.getElementById('challenge-incoming').textContent = code;
+      document.getElementById('challenge-box').style.display = 'block';
+      document.getElementById('status-text').textContent = 'Someone wants to join — verify their code below.';
+    }
+    if (d.status === 'active') {
+      roomRef.off('value', handshakeFn); handshakeFn = null;
+      enterChat('creator');
+    }
+    if (d.status === 'rejected') {
+      document.getElementById('challenge-box').style.display = 'none';
+      document.getElementById('status-text').textContent = 'Rejected. Waiting for someone to join…';
     }
   });
-}, { threshold: 0.1 });
-reveals.forEach(el => observer.observe(el));
+}
+
+function approveJoin() {
+  document.getElementById('challenge-box').style.display = 'none';
+  roomRef.update({ status: 'active' });
+}
+function rejectJoin() {
+  roomRef.update({ status: 'rejected', joinerId: null });
+}
+
+// ── JOIN ────────────────────────────────────────
+async function joinRoom() {
+  if (!db) { alert('Firebase not connected yet.'); return; }
+  const code = document.getElementById('join-code-input').value.trim();
+  if (code.length !== 6) return;
+  const errEl = document.getElementById('join-error');
+  errEl.classList.remove('show');
+
+  const snap = await db.ref('rooms/' + code).once('value');
+  if (!snap.exists() || snap.val().status !== 'waiting') {
+    errEl.classList.add('show'); return;
+  }
+
+  myRole = 'joiner';
+  myUserId = genId();
+  roomCode = code;
+  roomRef = db.ref('rooms/' + roomCode);
+
+  const myCode = challengeFor(roomCode, myUserId);
+  document.getElementById('my-challenge-code').textContent = myCode;
+  document.getElementById('join-step-1').style.display = 'none';
+  document.getElementById('join-step-2').style.display = 'block';
+
+  await roomRef.update({ joinerId: myUserId, status: 'challenge_pending' });
+
+  // Listen for approval
+  handshakeFn = roomRef.on('value', snap => {
+    const d = snap.val();
+    if (!d) return;
+    console.log('[joiner] status:', d.status);
+
+    if (d.status === 'active') {
+      roomRef.off('value', handshakeFn); handshakeFn = null;
+      enterChat('joiner');
+    }
+    if (d.status === 'rejected') {
+      document.getElementById('join-wait-msg').textContent = 'Rejected by creator.';
+    }
+  });
+}
+
+// ── CHAT ────────────────────────────────────────
+function enterChat(role) {
+  const peerName = role === 'creator' ? 'Them' : 'Creator';
+  document.getElementById('chat-avatar').textContent = peerName.slice(0,2).toUpperCase();
+  document.getElementById('chat-peer-name').textContent = peerName;
+  document.getElementById('chat-messages').innerHTML = '';
+  addSystem('You are now connected.');
+  showScreen('chat');
+
+  // Listen for messages
+  const msgsRef = roomRef.child('messages');
+  msgFn = msgsRef.on('child_added', snap => {
+    const m = snap.val();
+    addBubble(m.text, m.sender === myUserId, m.ts);
+  });
+
+  // Watch for room deletion (other person left)
+  roomWatchFn = roomRef.on('value', snap => {
+    if (!snap.exists()) {
+      addSystem('The other person left.');
+      document.getElementById('msg-input').disabled = true;
+    }
+  });
+}
+
+function sendMessage() {
+  const el = document.getElementById('msg-input');
+  const text = el.value.trim();
+  if (!text || !roomRef) return;
+  roomRef.child('messages').push({ sender: myUserId, text, ts: Date.now() });
+  el.value = ''; el.style.height = 'auto';
+}
+
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+}
+function autoResize(el) { el.style.height='auto'; el.style.height=Math.min(el.scrollHeight,120)+'px'; }
+
+function addBubble(text, isMe, ts) {
+  const msgs = document.getElementById('chat-messages');
+  const w = document.createElement('div');
+  w.className = 'msg-wrapper ' + (isMe ? 'out' : 'in');
+  w.innerHTML = `<div class="bubble">${esc(text)}</div><div class="msg-time">${fmt(ts)}</div>`;
+  msgs.appendChild(w);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+function addSystem(text) {
+  const msgs = document.getElementById('chat-messages');
+  const el = document.createElement('div');
+  el.className = 'system-msg'; el.textContent = text;
+  msgs.appendChild(el); msgs.scrollTop = msgs.scrollHeight;
+}
+
+function leaveChat() {
+  if (myRole === 'creator') roomRef.remove().catch(()=>{});
+  teardown(); goHome();
+}
+
+// ── BOOT ────────────────────────────────────────
+initFirebase('https://vantachat-8ea29-default-rtdb.europe-west1.firebasedatabase.app');
 </script>
 </body>
 </html>
